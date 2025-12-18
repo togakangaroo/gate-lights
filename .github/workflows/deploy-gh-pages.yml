@@ -1,0 +1,36 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main to gh-pages
+        run: |
+          # Fetch gh-pages branch or create it if it doesn't exist
+          git fetch origin gh-pages:gh-pages || git checkout -b gh-pages
+          git checkout gh-pages
+
+          # Merge main into gh-pages
+          git merge origin/main --no-edit -m "Auto-merge main to gh-pages"
+
+          # Push to gh-pages
+          git push origin gh-pages
