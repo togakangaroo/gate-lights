@@ -184,6 +184,10 @@
                 <label for="pattern-none">None</label>
             </div>
             <div class="pattern-option">
+                <input type="radio" id="pattern-all-random" name="pattern" value="all-random">
+                <label for="pattern-all-random">All (Random)</label>
+            </div>
+            <div class="pattern-option">
                 <input type="radio" id="pattern-bounce" name="pattern" value="bounce">
                 <label for="pattern-bounce">Bounce</label>
             </div>
@@ -216,16 +220,24 @@
                 <label for="pattern-rule30">Rule 30 (Cellular Automaton)</label>
             </div>
             <div class="pattern-option">
-                <input type="radio" id="pattern-gameoflife" name="pattern" value="gameoflife">
-                <label for="pattern-gameoflife">Game of Life</label>
-            </div>
-            <div class="pattern-option">
                 <input type="radio" id="pattern-langton" name="pattern" value="langton">
                 <label for="pattern-langton">Langton's Ant</label>
             </div>
             <div class="pattern-option">
                 <input type="radio" id="pattern-inverted-ant" name="pattern" value="inverted-ant">
                 <label for="pattern-inverted-ant">Inverted Ant</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-heartbeat" name="pattern" value="heartbeat">
+                <label for="pattern-heartbeat">Heartbeat</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-thunder" name="pattern" value="thunder">
+                <label for="pattern-thunder">Thunder</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-accelerando" name="pattern" value="accelerando">
+                <label for="pattern-accelerando">Accelerando</label>
             </div>
         </div>
     </div>
@@ -511,54 +523,60 @@
             }
         }
 
-        // Conway's Game of Life
-        // Classic cellular automaton with emergent gliders and patterns
-        const gameOfLifePatternTemplate = function*() {
-            // Start with a glider
-            let grid = [
-                [0, 1, 0, 0, 0, 0],
-                [0, 0, 1, 1, 0, 0]
-            ];
-
+        // Thunder - Random lightning flashes with variable delays simulating a storm
+        const thunderPatternTemplate = function*() {
             while(true) {
-                const topStr = grid[0].join('');
-                const bottomStr = grid[1].join('');
-                yield `${topStr}
-                       ${bottomStr}`;
+                // Lightning flash - full brightness
+                yield [`111111
+                        111111`, 80];
 
-                // Apply Game of Life rules
-                const newGrid = [[0,0,0,0,0,0], [0,0,0,0,0,0]];
-
-                for (let row = 0; row < 2; row++) {
-                    for (let col = 0; col < 6; col++) {
-                        // Count neighbors (with wrapping)
-                        let neighbors = 0;
-                        for (let dr = -1; dr <= 1; dr++) {
-                            for (let dc = -1; dc <= 1; dc++) {
-                                if (dr === 0 && dc === 0) continue;
-                                const nr = (row + dr + 2) % 2;
-                                const nc = (col + dc + 6) % 6;
-                                neighbors += grid[nr][nc];
-                            }
-                        }
-
-                        // Apply rules: survive with 2-3 neighbors, born with 3
-                        if (grid[row][col] === 1) {
-                            newGrid[row][col] = (neighbors === 2 || neighbors === 3) ? 1 : 0;
-                        } else {
-                            newGrid[row][col] = (neighbors === 3) ? 1 : 0;
-                        }
-                    }
+                // Quick second flash (sometimes lightning strikes twice)
+                if (Math.random() < 0.3) {
+                    yield [`000000
+                            000000`, 50];
+                    yield [`111111
+                            111111`, 80];
                 }
 
-                grid = newGrid;
+                // Darkness
+                yield [`000000
+                        000000`, 200];
 
-                // Inject random life occasionally to keep it interesting
-                if (Math.random() < 0.1) {
-                    const randRow = Math.floor(Math.random() * 2);
-                    const randCol = Math.floor(Math.random() * 6);
-                    grid[randRow][randCol] = 1;
+                // Variable pause before next strike (1-4 seconds)
+                const pause = 1000 + Math.random() * 3000;
+                yield [`000000
+                        000000`, pause];
+            }
+        }
+
+        // Accelerando - Pattern that accelerates then resets
+        const accelerandoPatternTemplate = function*() {
+            while(true) {
+                let delay = 800; // Start slow
+
+                // Accelerating sequence
+                for (let cycle = 0; cycle < 8; cycle++) {
+                    // Pattern moves across
+                    yield [`100000
+                            000000`, delay];
+                    yield [`010000
+                            000000`, delay];
+                    yield [`001000
+                            000000`, delay];
+                    yield [`000100
+                            000000`, delay];
+                    yield [`000010
+                            000000`, delay];
+                    yield [`000001
+                            000000`, delay];
+
+                    // Speed up for next cycle
+                    delay = Math.max(100, delay - 100);
                 }
+
+                // Brief pause before reset
+                yield [`000000
+                        000000`, 1000];
             }
         }
 
@@ -611,6 +629,66 @@
             ant = langtonsAntPatternTemplate()
             for(const s of ant)
                 yield s.replaceAll('0','p').replaceAll('1', '0').replaceAll('p', '1')
+        }
+
+        // Heartbeat - Demonstrates variable timing with realistic heartbeat pattern
+        const heartbeatPatternTemplate = function*() {
+            while(true) {
+                // First beat (systole) - quick flash from center outward
+                yield [`000000
+                        001100`, 100];
+                yield [`001100
+                        011110`, 100];
+                yield [`011110
+                        111111`, 150];
+
+                // Brief pause
+                yield [`000000
+                        000000`, 100];
+
+                // Second beat (diastole) - slightly weaker
+                yield [`000000
+                        001100`, 100];
+                yield [`001100
+                        011110`, 150];
+
+                // Longer pause before next heartbeat
+                yield [`000000
+                        000000`, 600];
+            }
+        }
+
+        // All (Random) - Cycles through random patterns every 24 steps
+        const allRandomPatternTemplate = function*() {
+            // List of all pattern generator functions
+            const patternGenerators = [
+                bouncePatternTemplate,
+                randomPatternTemplate,
+                wavePatternTemplate,
+                snakePatternTemplate,
+                sparklePatternTemplate,
+                waterfallPatternTemplate,
+                breathingPatternTemplate,
+                rule30PatternTemplate,
+                langtonsAntPatternTemplate,
+                invertedAntPatternTemplate,
+                heartbeatPatternTemplate,
+                thunderPatternTemplate,
+                accelerandoPatternTemplate
+            ];
+
+            while(true) {
+                // Pick a random pattern
+                const randomIndex = Math.floor(Math.random() * patternGenerators.length);
+                const patternGen = patternGenerators[randomIndex]();
+
+                // Run it for 24 steps
+                for (let i = 0; i < 24; i++) {
+                    const result = patternGen.next();
+                    if (result.done) break;
+                    yield result.value;
+                }
+            }
         }
 
         // Map light number to rod and end
@@ -690,6 +768,7 @@
         // Pattern control
         let animationTimer = null;
         let currentPatternGenerator = null;
+        let defaultPatternInterval = 500;
 
         function clearAllLights() {
             for (let i = 1; i <= 12; i++) {
@@ -701,7 +780,7 @@
 
         function stopAnimation() {
             if (animationTimer) {
-                clearInterval(animationTimer);
+                clearTimeout(animationTimer);
                 animationTimer = null;
             }
         }
@@ -711,7 +790,13 @@
 
             // Get next pattern from generator
             const result = currentPatternGenerator.next();
-            const patternString = result.value;
+            let patternString = result.value;
+            let nextDelay = defaultPatternInterval;
+
+            // Check if this is a tuple with timing information [pattern, delay]
+            if (Array.isArray(patternString)) {
+                [patternString, nextDelay] = patternString;
+            }
 
             // Parse the pattern string, extracting only 0s and 1s
             const digits = patternString.replace(/[^01]/g, '');
@@ -727,6 +812,11 @@
                     toggle(lightNumber, true);
                 }
             }
+
+            // Schedule next pattern application with variable delay
+            if (currentPatternGenerator) {
+                animationTimer = setTimeout(applyPattern, nextDelay);
+            }
         }
 
         // Event listeners for pattern radio buttons
@@ -735,50 +825,62 @@
             radio.addEventListener('change', (e) => {
                 stopAnimation();
 
-                if (e.target.value === 'bounce') {
-                    // Create bounce generator and start animation
+                if (e.target.value === 'all-random') {
+                    currentPatternGenerator = allRandomPatternTemplate();
+                    defaultPatternInterval = 300;
+                    applyPattern();
+                } else if (e.target.value === 'bounce') {
                     currentPatternGenerator = bouncePatternTemplate();
-                    animationTimer = setInterval(applyPattern, 500);
+                    defaultPatternInterval = 500;
+                    applyPattern();
                 } else if (e.target.value === 'random') {
-                    // Create random generator and start animation
                     currentPatternGenerator = randomPatternTemplate();
-                    animationTimer = setInterval(applyPattern, 1000);
+                    defaultPatternInterval = 1000;
+                    applyPattern();
                 } else if (e.target.value === 'wave') {
-                    // Create wave generator and start animation
                     currentPatternGenerator = wavePatternTemplate();
-                    animationTimer = setInterval(applyPattern, 400);
+                    defaultPatternInterval = 400;
+                    applyPattern();
                 } else if (e.target.value === 'snake') {
-                    // Create snake generator and start animation
                     currentPatternGenerator = snakePatternTemplate();
-                    animationTimer = setInterval(applyPattern, 500);
+                    defaultPatternInterval = 500;
+                    applyPattern();
                 } else if (e.target.value === 'sparkle') {
-                    // Create sparkle generator and start animation
                     currentPatternGenerator = sparklePatternTemplate();
-                    animationTimer = setInterval(applyPattern, 300);
+                    defaultPatternInterval = 300;
+                    applyPattern();
                 } else if (e.target.value === 'waterfall') {
-                    // Create waterfall generator and start animation
                     currentPatternGenerator = waterfallPatternTemplate();
-                    animationTimer = setInterval(applyPattern, 200);
+                    defaultPatternInterval = 200;
+                    applyPattern();
                 } else if (e.target.value === 'breathing') {
-                    // Create breathing generator and start animation
                     currentPatternGenerator = breathingPatternTemplate();
-                    animationTimer = setInterval(applyPattern, 300);
+                    defaultPatternInterval = 300;
+                    applyPattern();
                 } else if (e.target.value === 'rule30') {
-                    // Create Rule 30 cellular automaton generator
                     currentPatternGenerator = rule30PatternTemplate();
-                    animationTimer = setInterval(applyPattern, 400);
-                } else if (e.target.value === 'gameoflife') {
-                    // Create Game of Life generator
-                    currentPatternGenerator = gameOfLifePatternTemplate();
-                    animationTimer = setInterval(applyPattern, 500);
+                    defaultPatternInterval = 400;
+                    applyPattern();
                 } else if (e.target.value === 'langton') {
-                    // Create Langton's Ant generator
                     currentPatternGenerator = langtonsAntPatternTemplate();
-                    animationTimer = setInterval(applyPattern, 250);
+                    defaultPatternInterval = 250;
+                    applyPattern();
                 } else if (e.target.value === 'inverted-ant') {
-                    // Create Inverted Ant generator
                     currentPatternGenerator = invertedAntPatternTemplate();
-                    animationTimer = setInterval(applyPattern, 250);
+                    defaultPatternInterval = 250;
+                    applyPattern();
+                } else if (e.target.value === 'heartbeat') {
+                    currentPatternGenerator = heartbeatPatternTemplate();
+                    defaultPatternInterval = 500;
+                    applyPattern();
+                } else if (e.target.value === 'thunder') {
+                    currentPatternGenerator = thunderPatternTemplate();
+                    defaultPatternInterval = 500;
+                    applyPattern();
+                } else if (e.target.value === 'accelerando') {
+                    currentPatternGenerator = accelerandoPatternTemplate();
+                    defaultPatternInterval = 500;
+                    applyPattern();
                 } else if (e.target.value === 'none') {
                     // Just stop the animation, keep current light state
                     currentPatternGenerator = null;
