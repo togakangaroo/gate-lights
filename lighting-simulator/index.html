@@ -657,20 +657,40 @@
 
         // Langton's Ant - Simple rules create complex emergent behavior
         // Ant turns left on 1, right on 0, and flips the cell
+        // Simulates on larger 6x12 grid, displays 2x6 window following the ant
         const langtonsAntPatternTemplate = function*() {
-            let grid = [
-                [0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0]
-            ];
+            const GRID_ROWS = 6;
+            const GRID_COLS = 12;
+            const DISPLAY_ROWS = 2;
+            const DISPLAY_COLS = 6;
 
-            let antRow = 0;
-            let antCol = 3;
+            let grid = Array(GRID_ROWS).fill(0).map(() => Array(GRID_COLS).fill(0));
+
+            let antRow = Math.floor(GRID_ROWS / 2);
+            let antCol = Math.floor(GRID_COLS / 2);
             let antDir = 0; // 0=up, 1=right, 2=down, 3=left
 
             while(true) {
-                // Show current state with ant visible
-                const displayGrid = grid.map(row => [...row]);
-                displayGrid[antRow][antCol] = 1; // Show ant position
+                // Calculate display window centered on ant
+                let displayStartRow = Math.max(0, Math.min(GRID_ROWS - DISPLAY_ROWS, antRow - Math.floor(DISPLAY_ROWS / 2)));
+                let displayStartCol = Math.max(0, Math.min(GRID_COLS - DISPLAY_COLS, antCol - Math.floor(DISPLAY_COLS / 2)));
+
+                // Extract 2x6 window
+                const displayGrid = [];
+                for (let r = 0; r < DISPLAY_ROWS; r++) {
+                    displayGrid[r] = [];
+                    for (let c = 0; c < DISPLAY_COLS; c++) {
+                        displayGrid[r][c] = grid[displayStartRow + r][displayStartCol + c];
+                    }
+                }
+
+                // Show ant position if it's in the display window
+                const antDisplayRow = antRow - displayStartRow;
+                const antDisplayCol = antCol - displayStartCol;
+                if (antDisplayRow >= 0 && antDisplayRow < DISPLAY_ROWS &&
+                    antDisplayCol >= 0 && antDisplayCol < DISPLAY_COLS) {
+                    displayGrid[antDisplayRow][antDisplayCol] = 1;
+                }
 
                 const topStr = displayGrid[0].join('');
                 const bottomStr = displayGrid[1].join('');
@@ -691,11 +711,11 @@
                 // Flip current cell
                 grid[antRow][antCol] = 1 - currentCell;
 
-                // Move forward
-                if (antDir === 0) antRow = (antRow - 1 + 2) % 2;      // up
-                else if (antDir === 1) antCol = (antCol + 1) % 6;     // right
-                else if (antDir === 2) antRow = (antRow + 1) % 2;     // down
-                else if (antDir === 3) antCol = (antCol - 1 + 6) % 6; // left
+                // Move forward with wrapping on larger grid
+                if (antDir === 0) antRow = (antRow - 1 + GRID_ROWS) % GRID_ROWS;      // up
+                else if (antDir === 1) antCol = (antCol + 1) % GRID_COLS;             // right
+                else if (antDir === 2) antRow = (antRow + 1) % GRID_ROWS;             // down
+                else if (antDir === 3) antCol = (antCol - 1 + GRID_COLS) % GRID_COLS; // left
             }
         }
 
