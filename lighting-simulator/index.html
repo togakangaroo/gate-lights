@@ -211,6 +211,22 @@
                 <input type="radio" id="pattern-breathing" name="pattern" value="breathing">
                 <label for="pattern-breathing">Breathing</label>
             </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-rule30" name="pattern" value="rule30">
+                <label for="pattern-rule30">Rule 30 (Cellular Automaton)</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-gameoflife" name="pattern" value="gameoflife">
+                <label for="pattern-gameoflife">Game of Life</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-langton" name="pattern" value="langton">
+                <label for="pattern-langton">Langton's Ant</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-inverted-ant" name="pattern" value="inverted-ant">
+                <label for="pattern-inverted-ant">Inverted Ant</label>
+            </div>
         </div>
     </div>
 
@@ -461,6 +477,142 @@
             }
         }
 
+        // Rule 30 - Elementary Cellular Automaton
+        // Famous for producing complex, chaotic patterns from simple rules
+        const rule30PatternTemplate = function*() {
+            let grid = [
+                [0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0, 0]  // Start with single cell in middle
+            ];
+
+            while(true) {
+                // Convert grid to string
+                const topStr = grid[0].join('');
+                const bottomStr = grid[1].join('');
+                yield `${topStr}
+                       ${bottomStr}`;
+
+                // Evolve bottom row according to Rule 30
+                const newBottom = [];
+                for (let i = 0; i < 6; i++) {
+                    const left = grid[1][(i - 1 + 6) % 6];   // Wrap around
+                    const center = grid[1][i];
+                    const right = grid[1][(i + 1) % 6];      // Wrap around
+
+                    // Rule 30: 111->0, 110->0, 101->0, 100->1, 011->1, 010->1, 001->1, 000->0
+                    const pattern = (left << 2) | (center << 1) | right;
+                    const newVal = (30 >> pattern) & 1;
+                    newBottom[i] = newVal;
+                }
+
+                // Shift: top becomes old bottom, bottom becomes new generation
+                grid[0] = [...grid[1]];
+                grid[1] = newBottom;
+            }
+        }
+
+        // Conway's Game of Life
+        // Classic cellular automaton with emergent gliders and patterns
+        const gameOfLifePatternTemplate = function*() {
+            // Start with a glider
+            let grid = [
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 1, 0, 0]
+            ];
+
+            while(true) {
+                const topStr = grid[0].join('');
+                const bottomStr = grid[1].join('');
+                yield `${topStr}
+                       ${bottomStr}`;
+
+                // Apply Game of Life rules
+                const newGrid = [[0,0,0,0,0,0], [0,0,0,0,0,0]];
+
+                for (let row = 0; row < 2; row++) {
+                    for (let col = 0; col < 6; col++) {
+                        // Count neighbors (with wrapping)
+                        let neighbors = 0;
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                if (dr === 0 && dc === 0) continue;
+                                const nr = (row + dr + 2) % 2;
+                                const nc = (col + dc + 6) % 6;
+                                neighbors += grid[nr][nc];
+                            }
+                        }
+
+                        // Apply rules: survive with 2-3 neighbors, born with 3
+                        if (grid[row][col] === 1) {
+                            newGrid[row][col] = (neighbors === 2 || neighbors === 3) ? 1 : 0;
+                        } else {
+                            newGrid[row][col] = (neighbors === 3) ? 1 : 0;
+                        }
+                    }
+                }
+
+                grid = newGrid;
+
+                // Inject random life occasionally to keep it interesting
+                if (Math.random() < 0.1) {
+                    const randRow = Math.floor(Math.random() * 2);
+                    const randCol = Math.floor(Math.random() * 6);
+                    grid[randRow][randCol] = 1;
+                }
+            }
+        }
+
+        // Langton's Ant - Simple rules create complex emergent behavior
+        // Ant turns left on 1, right on 0, and flips the cell
+        const langtonsAntPatternTemplate = function*() {
+            let grid = [
+                [0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0]
+            ];
+
+            let antRow = 0;
+            let antCol = 3;
+            let antDir = 0; // 0=up, 1=right, 2=down, 3=left
+
+            while(true) {
+                // Show current state with ant visible
+                const displayGrid = grid.map(row => [...row]);
+                displayGrid[antRow][antCol] = 1; // Show ant position
+
+                const topStr = displayGrid[0].join('');
+                const bottomStr = displayGrid[1].join('');
+                yield `${topStr}
+                       ${bottomStr}`;
+
+                // Apply Langton's Ant rules
+                const currentCell = grid[antRow][antCol];
+
+                if (currentCell === 0) {
+                    // Turn right (clockwise)
+                    antDir = (antDir + 1) % 4;
+                } else {
+                    // Turn left (counter-clockwise)
+                    antDir = (antDir + 3) % 4;
+                }
+
+                // Flip current cell
+                grid[antRow][antCol] = 1 - currentCell;
+
+                // Move forward
+                if (antDir === 0) antRow = (antRow - 1 + 2) % 2;      // up
+                else if (antDir === 1) antCol = (antCol + 1) % 6;     // right
+                else if (antDir === 2) antRow = (antRow + 1) % 2;     // down
+                else if (antDir === 3) antCol = (antCol - 1 + 6) % 6; // left
+            }
+        }
+
+        // Inverted Langton's Ant - Rules reversed: turn left on 0, right on 1
+        const invertedAntPatternTemplate = function*() {
+            ant = langtonsAntPatternTemplate()
+            for(const s of ant)
+                yield s.replaceAll('0','p').replaceAll('1', '0').replaceAll('p', '1')
+        }
+
         // Map light number to rod and end
         function getLightInfo(lightNumber) {
             // Lights 1-6 are top (rods 1-6)
@@ -611,6 +763,22 @@
                     // Create breathing generator and start animation
                     currentPatternGenerator = breathingPatternTemplate();
                     animationTimer = setInterval(applyPattern, 300);
+                } else if (e.target.value === 'rule30') {
+                    // Create Rule 30 cellular automaton generator
+                    currentPatternGenerator = rule30PatternTemplate();
+                    animationTimer = setInterval(applyPattern, 400);
+                } else if (e.target.value === 'gameoflife') {
+                    // Create Game of Life generator
+                    currentPatternGenerator = gameOfLifePatternTemplate();
+                    animationTimer = setInterval(applyPattern, 500);
+                } else if (e.target.value === 'langton') {
+                    // Create Langton's Ant generator
+                    currentPatternGenerator = langtonsAntPatternTemplate();
+                    animationTimer = setInterval(applyPattern, 250);
+                } else if (e.target.value === 'inverted-ant') {
+                    // Create Inverted Ant generator
+                    currentPatternGenerator = invertedAntPatternTemplate();
+                    animationTimer = setInterval(applyPattern, 250);
                 } else if (e.target.value === 'none') {
                     // Just stop the animation, keep current light state
                     currentPatternGenerator = null;
