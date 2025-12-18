@@ -188,10 +188,6 @@
                 <label for="pattern-all-random">All (Random)</label>
             </div>
             <div class="pattern-option">
-                <input type="radio" id="pattern-bounce" name="pattern" value="bounce">
-                <label for="pattern-bounce">Bounce</label>
-            </div>
-            <div class="pattern-option">
                 <input type="radio" id="pattern-random" name="pattern" value="random">
                 <label for="pattern-random">Random</label>
             </div>
@@ -255,6 +251,22 @@
                 <input type="radio" id="pattern-mushroom-cloud" name="pattern" value="mushroom-cloud">
                 <label for="pattern-mushroom-cloud">Mushroom Cloud</label>
             </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-intensity-wave" name="pattern" value="intensity-wave">
+                <label for="pattern-intensity-wave">Intensity Wave</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-scanner" name="pattern" value="scanner">
+                <label for="pattern-scanner">Scanner</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-campfire" name="pattern" value="campfire">
+                <label for="pattern-campfire">Campfire</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-shimmer" name="pattern" value="shimmer">
+                <label for="pattern-shimmer">Shimmer</label>
+            </div>
         </div>
     </div>
 
@@ -267,33 +279,6 @@
 
         // Light state: tracks which lights are on
         const lightState = {};
-
-        const bouncePatternTemplate = function*() {
-            while(true) {
-                // Moving right
-                yield `000000
-                       100000`
-                yield `000000
-                       010000`
-                yield `000000
-                       001000`
-                yield `000000
-                       000100`
-                yield `000000
-                       000010`
-                yield `000000
-                       000001`
-                // Moving left
-                yield `000000
-                       000010`
-                yield `000000
-                       000100`
-                yield `000000
-                       001000`
-                yield `000000
-                       010000`
-            }
-        }
 
         const randomPatternTemplate = function*() {
             while(true) {
@@ -745,6 +730,151 @@
             }
         }
 
+        // Intensity Wave - Brightness wave sweeping across the rods
+        // Treats each rod as having 3 brightness levels: off (00), half (01), full (11)
+        const intensityWavePatternTemplate = function*() {
+            while(true) {
+                // Wave moving left to right
+                yield [`000000
+                        000000`, 200];  // All off
+
+                yield [`000000
+                        100000`, 200];  // Rod 1 half
+
+                yield [`100000
+                        110000`, 200];  // Rod 1 full, Rod 2 half
+
+                yield [`010000
+                        111000`, 200];  // Rod 1 half, Rod 2 full, Rod 3 half
+
+                yield [`001000
+                        011100`, 200];  // Rod 2 half, Rod 3 full, Rod 4 half
+
+                yield [`000100
+                        001110`, 200];  // Rod 3 half, Rod 4 full, Rod 5 half
+
+                yield [`000010
+                        000111`, 200];  // Rod 4 half, Rod 5 full, Rod 6 half
+
+                yield [`000001
+                        000011`, 200];  // Rod 5 half, Rod 6 full
+
+                yield [`000000
+                        000001`, 200];  // Rod 6 half
+
+                yield [`000000
+                        000000`, 200];  // All off
+            }
+        }
+
+        // Scanner (KITT) - Bright point moving back and forth with trailing dim lights
+        const scannerPatternTemplate = function*() {
+            while(true) {
+                // Move left to right
+                yield [`100000
+                        100000`, 100];  // Position 0 full
+
+                yield [`110000
+                        110000`, 100];  // Position 0 full, 1 full
+
+                yield [`010000
+                        111000`, 100];  // Position 0 half, 1 full, 2 half
+
+                yield [`001000
+                        011100`, 100];  // Position 1 half, 2 full, 3 half
+
+                yield [`000100
+                        001110`, 100];  // Position 2 half, 3 full, 4 half
+
+                yield [`000010
+                        000111`, 100];  // Position 3 half, 4 full, 5 half
+
+                yield [`000001
+                        000011`, 100];  // Position 4 half, 5 full
+
+                yield [`000001
+                        000001`, 100];  // Position 5 full
+
+                // Move right to left
+                yield [`000011
+                        000011`, 100];  // Position 4 full, 5 full
+
+                yield [`000110
+                        000111`, 100];  // Position 3 half, 4 full, 5 half
+
+                yield [`001100
+                        001110`, 100];  // Position 2 half, 3 full, 4 half
+
+                yield [`011000
+                        011100`, 100];  // Position 1 half, 2 full, 3 half
+
+                yield [`110000
+                        111000`, 100];  // Position 0 half, 1 full, 2 half
+
+                yield [`100000
+                        110000`, 100];  // Position 0 full, 1 full
+            }
+        }
+
+        // Campfire - Random flickering at different intensity levels
+        const campfirePatternTemplate = function*() {
+            const rodStates = [0, 0, 0, 0, 0, 0];  // 0=off, 1=half, 2=full
+
+            while(true) {
+                // Update each rod randomly
+                for (let i = 0; i < 6; i++) {
+                    const rand = Math.random();
+                    if (rand < 0.3) {
+                        rodStates[i] = Math.max(0, rodStates[i] - 1);  // Dim
+                    } else if (rand < 0.6) {
+                        rodStates[i] = Math.min(2, rodStates[i] + 1);  // Brighten
+                    }
+                    // else stay the same
+                }
+
+                // Convert rod states to LED pattern
+                const topRow = rodStates.map(s => s === 2 ? '1' : '0').join('');
+                const bottomRow = rodStates.map(s => s >= 1 ? '1' : '0').join('');
+
+                yield [`${topRow}
+                        ${bottomRow}`, 150];
+            }
+        }
+
+        // Shimmer - Random rods pulsing independently at different brightness levels
+        const shimmerPatternTemplate = function*() {
+            const rodStates = [0, 0, 0, 0, 0, 0];     // Current brightness: 0=off, 1=half, 2=full
+            const rodDirections = [1, 1, 1, 1, 1, 1]; // 1=brightening, -1=dimming
+
+            while(true) {
+                // Update each rod independently
+                for (let i = 0; i < 6; i++) {
+                    rodStates[i] += rodDirections[i];
+
+                    // Reverse direction at boundaries
+                    if (rodStates[i] >= 2) {
+                        rodStates[i] = 2;
+                        rodDirections[i] = -1;
+                    } else if (rodStates[i] <= 0) {
+                        rodStates[i] = 0;
+                        rodDirections[i] = 1;
+                    }
+
+                    // Occasionally change direction randomly for variety
+                    if (Math.random() < 0.1) {
+                        rodDirections[i] = Math.random() < 0.5 ? 1 : -1;
+                    }
+                }
+
+                // Convert rod states to LED pattern
+                const topRow = rodStates.map(s => s === 2 ? '1' : '0').join('');
+                const bottomRow = rodStates.map(s => s >= 1 ? '1' : '0').join('');
+
+                yield [`${topRow}
+                        ${bottomRow}`, 200];
+            }
+        }
+
         // Langton's Ant - Simple rules create complex emergent behavior
         // Ant turns left on 1, right on 0, and flips the cell
         // Simulates on larger 6x12 grid, displays 2x6 window following the ant
@@ -847,7 +977,6 @@
         const allRandomPatternTemplate = function*() {
             // List of all pattern generator functions
             const patternGenerators = [
-                bouncePatternTemplate,
                 randomPatternTemplate,
                 wavePatternTemplate,
                 snakePatternTemplate,
@@ -863,7 +992,11 @@
                 heartbeatPatternTemplate,
                 thunderPatternTemplate,
                 explosionPatternTemplate,
-                mushroomCloudPatternTemplate
+                mushroomCloudPatternTemplate,
+                intensityWavePatternTemplate,
+                scannerPatternTemplate,
+                campfirePatternTemplate,
+                shimmerPatternTemplate
             ];
 
             while(true) {
@@ -1024,10 +1157,6 @@
                     currentPatternGenerator = allRandomPatternTemplate();
                     defaultPatternInterval = 300;
                     applyPattern();
-                } else if (e.target.value === 'bounce') {
-                    currentPatternGenerator = bouncePatternTemplate();
-                    defaultPatternInterval = 500;
-                    applyPattern();
                 } else if (e.target.value === 'random') {
                     currentPatternGenerator = randomPatternTemplate();
                     defaultPatternInterval = 1000;
@@ -1091,6 +1220,22 @@
                 } else if (e.target.value === 'mushroom-cloud') {
                     currentPatternGenerator = mushroomCloudPatternTemplate();
                     defaultPatternInterval = 500;
+                    applyPattern();
+                } else if (e.target.value === 'intensity-wave') {
+                    currentPatternGenerator = intensityWavePatternTemplate();
+                    defaultPatternInterval = 200;
+                    applyPattern();
+                } else if (e.target.value === 'scanner') {
+                    currentPatternGenerator = scannerPatternTemplate();
+                    defaultPatternInterval = 100;
+                    applyPattern();
+                } else if (e.target.value === 'campfire') {
+                    currentPatternGenerator = campfirePatternTemplate();
+                    defaultPatternInterval = 150;
+                    applyPattern();
+                } else if (e.target.value === 'shimmer') {
+                    currentPatternGenerator = shimmerPatternTemplate();
+                    defaultPatternInterval = 200;
                     applyPattern();
                 } else if (e.target.value === 'none') {
                     // Just stop the animation, keep current light state
