@@ -212,6 +212,92 @@
         // Light state: tracks which lights are on
         const lightState = {};
 
+        const bouncePatternTemplate = function*() {
+            while(true) {
+                // Moving right
+                yield `000000
+                       100000`
+                yield `000000
+                       010000`
+                yield `000000
+                       001000`
+                yield `000000
+                       000100`
+                yield `000000
+                       000010`
+                yield `000000
+                       000001`
+                // Moving left
+                yield `000000
+                       000010`
+                yield `000000
+                       000100`
+                yield `000000
+                       001000`
+                yield `000000
+                       010000`
+            }
+        }
+
+        const randomPatternTemplate = function*() {
+            while(true) {
+                // Pick a random number of lights (0-12)
+                const numLights = Math.floor(Math.random() * 13);
+
+                // Create array of all light positions [0-11]
+                const allLights = Array.from({length: 12}, (_, i) => i);
+
+                // Shuffle using Fisher-Yates
+                for (let i = allLights.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allLights[i], allLights[j]] = [allLights[j], allLights[i]];
+                }
+
+                // Create pattern string
+                let topRow = ['0', '0', '0', '0', '0', '0'];
+                let bottomRow = ['0', '0', '0', '0', '0', '0'];
+
+                for (let i = 0; i < numLights; i++) {
+                    const lightIndex = allLights[i];
+                    if (lightIndex < 6) {
+                        topRow[lightIndex] = '1';
+                    } else {
+                        bottomRow[lightIndex - 6] = '1';
+                    }
+                }
+
+                yield `${topRow.join('')}
+                       ${bottomRow.join('')}`;
+            }
+        }
+
+        const wavePatternTemplate = function*() {
+            while(true) {
+                // Moving right
+                yield `100000
+                       010000`
+                yield `010000
+                       101000`
+                yield `001000
+                       010100`
+                yield `000100
+                       001010`
+                yield `000010
+                       000101`
+                yield `000001
+                       000010`
+                // Moving left
+                yield `000010
+                       000101`
+                yield `000100
+                       001010`
+                yield `001000
+                       010100`
+                yield `010000
+                       101000`
+            }
+        }
+
         const snakePatternTemplate = function*() {
             while(true) {
                 yield `111000
@@ -317,11 +403,7 @@
 
         // Pattern control
         let animationTimer = null;
-        let bouncePosition = 0;
-        let bounceDirection = 1; // 1 for right, -1 for left
-        let wavePosition = 0;
-        let waveDirection = 1; // 1 for right, -1 for left
-        let snakeGenerator = null;
+        let currentPatternGenerator = null;
 
         function clearAllLights() {
             for (let i = 1; i <= 12; i++) {
@@ -338,94 +420,11 @@
             }
         }
 
-        function bouncePattern() {
-            // Clear all lights first
-            clearAllLights();
+        function applyPattern() {
+            if (!currentPatternGenerator) return;
 
-            // Light up the bottom of the current rod (lights 7-12 are bottom)
-            const lightNumber = 7 + bouncePosition;
-            toggle(lightNumber, true);
-
-            // Move to next position
-            bouncePosition += bounceDirection;
-
-            // Reverse direction at the ends
-            if (bouncePosition >= 6) {
-                bouncePosition = 4; // Second-to-last rod
-                bounceDirection = -1;
-            } else if (bouncePosition < 0) {
-                bouncePosition = 1; // Second rod
-                bounceDirection = 1;
-            }
-        }
-
-        function randomPattern() {
-            // Pick a random number of lights to turn on (0-12)
-            const numLights = Math.floor(Math.random() * 13);
-
-            // Clear all lights first
-            clearAllLights();
-
-            // Pick random lights to turn on
-            if (numLights > 0) {
-                // Create array of all light numbers [1-12]
-                const allLights = Array.from({length: 12}, (_, i) => i + 1);
-
-                // Shuffle and pick the first numLights
-                for (let i = allLights.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allLights[i], allLights[j]] = [allLights[j], allLights[i]];
-                }
-
-                // Turn on the randomly selected lights
-                for (let i = 0; i < numLights; i++) {
-                    toggle(allLights[i], true);
-                }
-            }
-        }
-
-        function wavePattern() {
-            // Clear all lights first
-            clearAllLights();
-
-            // Rod numbering is 0-5 (representing rods 1-6)
-            const centerRod = wavePosition;
-
-            // Light up the center rod fully (both top and bottom)
-            // Top LEDs are 1-6, bottom LEDs are 7-12
-            const topLight = centerRod + 1;
-            const bottomLight = centerRod + 7;
-            toggle(topLight, true);
-            toggle(bottomLight, true);
-
-            // Light up left neighbor's bottom (if exists)
-            if (centerRod > 0) {
-                const leftBottomLight = centerRod + 6; // centerRod - 1 + 7
-                toggle(leftBottomLight, true);
-            }
-
-            // Light up right neighbor's bottom (if exists)
-            if (centerRod < 5) {
-                const rightBottomLight = centerRod + 8; // centerRod + 1 + 7
-                toggle(rightBottomLight, true);
-            }
-
-            // Move to next position
-            wavePosition += waveDirection;
-
-            // Reverse direction at the ends
-            if (wavePosition >= 6) {
-                wavePosition = 4; // Second-to-last rod
-                waveDirection = -1;
-            } else if (wavePosition < 0) {
-                wavePosition = 1; // Second rod
-                waveDirection = 1;
-            }
-        }
-
-        function snakePattern() {
             // Get next pattern from generator
-            const result = snakeGenerator.next();
+            const result = currentPatternGenerator.next();
             const patternString = result.value;
 
             // Parse the pattern string, extracting only 0s and 1s
@@ -451,30 +450,24 @@
                 stopAnimation();
 
                 if (e.target.value === 'bounce') {
-                    // Reset bounce position
-                    bouncePosition = 0;
-                    bounceDirection = 1;
-
-                    // Start the bounce animation (500ms interval)
-                    animationTimer = setInterval(bouncePattern, 500);
+                    // Create bounce generator and start animation
+                    currentPatternGenerator = bouncePatternTemplate();
+                    animationTimer = setInterval(applyPattern, 500);
                 } else if (e.target.value === 'random') {
-                    // Start the random animation (1000ms interval)
-                    animationTimer = setInterval(randomPattern, 1000);
+                    // Create random generator and start animation
+                    currentPatternGenerator = randomPatternTemplate();
+                    animationTimer = setInterval(applyPattern, 1000);
                 } else if (e.target.value === 'wave') {
-                    // Reset wave position
-                    wavePosition = 0;
-                    waveDirection = 1;
-
-                    // Start the wave animation (400ms interval)
-                    animationTimer = setInterval(wavePattern, 400);
+                    // Create wave generator and start animation
+                    currentPatternGenerator = wavePatternTemplate();
+                    animationTimer = setInterval(applyPattern, 400);
                 } else if (e.target.value === 'snake') {
-                    // Create new snake generator instance
-                    snakeGenerator = snakePatternTemplate();
-
-                    // Start the snake animation (500ms interval)
-                    animationTimer = setInterval(snakePattern, 500);
+                    // Create snake generator and start animation
+                    currentPatternGenerator = snakePatternTemplate();
+                    animationTimer = setInterval(applyPattern, 500);
                 } else if (e.target.value === 'none') {
                     // Just stop the animation, keep current light state
+                    currentPatternGenerator = null;
                 }
             });
         });
