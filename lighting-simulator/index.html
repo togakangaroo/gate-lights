@@ -199,6 +199,18 @@
                 <input type="radio" id="pattern-snake" name="pattern" value="snake">
                 <label for="pattern-snake">Snake</label>
             </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-sparkle" name="pattern" value="sparkle">
+                <label for="pattern-sparkle">Sparkle</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-waterfall" name="pattern" value="waterfall">
+                <label for="pattern-waterfall">Waterfall</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-breathing" name="pattern" value="breathing">
+                <label for="pattern-breathing">Breathing</label>
+            </div>
         </div>
     </div>
 
@@ -324,6 +336,128 @@
                        110000`
                 yield `110000
                        100000`
+            }
+        }
+
+        const sparklePatternTemplate = function*() {
+            while(true) {
+                // Create 1-3 random sparkles
+                const numSparkles = Math.floor(Math.random() * 3) + 1;
+                const allPositions = Array.from({length: 12}, (_, i) => i);
+
+                // Shuffle
+                for (let i = allPositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+                }
+
+                let topRow = ['0', '0', '0', '0', '0', '0'];
+                let bottomRow = ['0', '0', '0', '0', '0', '0'];
+
+                for (let i = 0; i < numSparkles; i++) {
+                    const pos = allPositions[i];
+                    if (pos < 6) {
+                        topRow[pos] = '1';
+                    } else {
+                        bottomRow[pos - 6] = '1';
+                    }
+                }
+
+                yield `${topRow.join('')}
+                       ${bottomRow.join('')}`;
+            }
+        }
+
+        const waterfallPatternTemplate = function*() {
+            while(true) {
+                // Cascade from left to right, top to bottom
+                yield `100000
+                       000000`
+                yield `110000
+                       100000`
+                yield `111000
+                       110000`
+                yield `111100
+                       111000`
+                yield `111110
+                       111100`
+                yield `111111
+                       111110`
+                yield `011111
+                       111111`
+                yield `001111
+                       011111`
+                yield `000111
+                       001111`
+                yield `000011
+                       000111`
+                yield `000001
+                       000011`
+                yield `000000
+                       000001`
+                yield `000000
+                       000000`
+            }
+        }
+
+        const breathingPatternTemplate = function*() {
+            while(true) {
+                // Breathing in - gradually light up all lights
+                yield `000000
+                       000000`
+                yield `000000
+                       010000`
+                yield `000000
+                       011000`
+                yield `010000
+                       011000`
+                yield `011000
+                       011100`
+                yield `011000
+                       111100`
+                yield `011100
+                       111100`
+                yield `111100
+                       111110`
+                yield `111100
+                       111111`
+                yield `111110
+                       111111`
+                yield `111111
+                       111111`
+                // Hold
+                yield `111111
+                       111111`
+                yield `111111
+                       111111`
+                // Breathing out - gradually turn off
+                yield `111110
+                       111111`
+                yield `111100
+                       111111`
+                yield `111100
+                       111110`
+                yield `111100
+                       111100`
+                yield `011100
+                       111100`
+                yield `011000
+                       111100`
+                yield `011000
+                       011100`
+                yield `010000
+                       011000`
+                yield `000000
+                       011000`
+                yield `000000
+                       010000`
+                yield `000000
+                       000000`
+                // Hold
+                yield `000000
+                       000000`
+                yield `000000
+                       000000`
             }
         }
 
@@ -465,6 +599,18 @@
                     // Create snake generator and start animation
                     currentPatternGenerator = snakePatternTemplate();
                     animationTimer = setInterval(applyPattern, 500);
+                } else if (e.target.value === 'sparkle') {
+                    // Create sparkle generator and start animation
+                    currentPatternGenerator = sparklePatternTemplate();
+                    animationTimer = setInterval(applyPattern, 300);
+                } else if (e.target.value === 'waterfall') {
+                    // Create waterfall generator and start animation
+                    currentPatternGenerator = waterfallPatternTemplate();
+                    animationTimer = setInterval(applyPattern, 200);
+                } else if (e.target.value === 'breathing') {
+                    // Create breathing generator and start animation
+                    currentPatternGenerator = breathingPatternTemplate();
+                    animationTimer = setInterval(applyPattern, 300);
                 } else if (e.target.value === 'none') {
                     // Just stop the animation, keep current light state
                     currentPatternGenerator = null;
