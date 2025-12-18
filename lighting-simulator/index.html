@@ -220,6 +220,10 @@
                 <label for="pattern-rule30">Rule 30 (Cellular Automaton)</label>
             </div>
             <div class="pattern-option">
+                <input type="radio" id="pattern-variable-rule30" name="pattern" value="variableRule30">
+                <label for="pattern-variable-rule30">Rule 30 (Variable Rate)</label>
+            </div>
+            <div class="pattern-option">
                 <input type="radio" id="pattern-langton" name="pattern" value="langton">
                 <label for="pattern-langton">Langton's Ant</label>
             </div>
@@ -550,6 +554,18 @@
             }
         }
 
+        const variableRule30PatternTemplate = function *() {
+            const rule30 = rule30PatternTemplate()
+            const count = (val, coll) => Array.from(coll).filter(x => x === val).length
+            for(const pattern of rule30) {
+                const lines = pattern.split('\n')
+                let timing = 100 * (count('1', lines[1]) - count('1', lines[0]))
+                timing = timing < 0 ? 0 : timing
+                timing += 200
+                yield [pattern, timing]
+            }
+        }
+
         // Thunder - Random lightning flashes with variable delays simulating a storm
         const thunderPatternTemplate = function*() {
             while(true) {
@@ -749,6 +765,7 @@
                 waterfallPatternTemplate,
                 breathingPatternTemplate,
                 rule30PatternTemplate,
+                variableRule30PatternTemplate,
                 langtonsAntPatternTemplate,
                 invertedAntPatternTemplate,
                 heartbeatPatternTemplate,
@@ -945,6 +962,10 @@
                     applyPattern();
                 } else if (e.target.value === 'rule30') {
                     currentPatternGenerator = rule30PatternTemplate();
+                    defaultPatternInterval = 400;
+                    applyPattern();
+                } else if (e.target.value === 'variableRule30') {
+                    currentPatternGenerator = variableRule30PatternTemplate();
                     defaultPatternInterval = 400;
                     applyPattern();
                 } else if (e.target.value === 'langton') {
