@@ -236,8 +236,12 @@
                 <label for="pattern-thunder">Thunder</label>
             </div>
             <div class="pattern-option">
-                <input type="radio" id="pattern-accelerando" name="pattern" value="accelerando">
-                <label for="pattern-accelerando">Accelerando</label>
+                <input type="radio" id="pattern-explosion" name="pattern" value="explosion">
+                <label for="pattern-explosion">Explosion</label>
+            </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-implosion" name="pattern" value="implosion">
+                <label for="pattern-implosion">Implosion</label>
             </div>
         </div>
     </div>
@@ -572,34 +576,86 @@
             }
         }
 
-        // Accelerando - Pattern that accelerates then resets
-        const accelerandoPatternTemplate = function*() {
+        // Explosion - Expands outward from center with accelerating speed
+        const explosionPatternTemplate = function*() {
             while(true) {
-                let delay = 800; // Start slow
-
-                // Accelerating sequence
-                for (let cycle = 0; cycle < 8; cycle++) {
-                    // Pattern moves across
-                    yield [`100000
-                            000000`, delay];
-                    yield [`010000
-                            000000`, delay];
-                    yield [`001000
-                            000000`, delay];
-                    yield [`000100
-                            000000`, delay];
-                    yield [`000010
-                            000000`, delay];
-                    yield [`000001
-                            000000`, delay];
-
-                    // Speed up for next cycle
-                    delay = Math.max(100, delay - 100);
-                }
-
-                // Brief pause before reset
+                // Start dark
                 yield [`000000
-                        000000`, 1000];
+                        000000`, 400];
+
+                // Ignition - center lights up
+                yield [`000000
+                        001100`, 150];
+
+                // Rapid expansion
+                yield [`001100
+                        011110`, 100];
+
+                yield [`011110
+                        111111`, 80];
+
+                // Full blast
+                yield [`111111
+                        111111`, 60];
+
+                // Flash
+                yield [`111111
+                        111111`, 40];
+
+                // Fade quickly
+                yield [`011110
+                        111111`, 60];
+
+                yield [`001100
+                        011110`, 100];
+
+                yield [`000000
+                        001100`, 150];
+
+                // Darkness before next explosion
+                yield [`000000
+                        000000`, 800];
+            }
+        }
+
+        // Implosion - Contracts inward to center with varying speed
+        const implosionPatternTemplate = function*() {
+            while(true) {
+                // Start fully lit
+                yield [`111111
+                        111111`, 300];
+
+                // Slow initial contraction
+                yield [`011110
+                        111111`, 250];
+
+                yield [`011110
+                        011110`, 200];
+
+                // Speed up as it contracts
+                yield [`001100
+                        011110`, 150];
+
+                yield [`001100
+                        001100`, 100];
+
+                // Rapid final collapse
+                yield [`000000
+                        001100`, 80];
+
+                yield [`000000
+                        000000`, 60];
+
+                // Brief void
+                yield [`000000
+                        000000`, 200];
+
+                // Slow rebuild
+                yield [`000000
+                        001100`, 300];
+
+                yield [`001100
+                        001100`, 250];
             }
         }
 
@@ -697,7 +753,8 @@
                 invertedAntPatternTemplate,
                 heartbeatPatternTemplate,
                 thunderPatternTemplate,
-                accelerandoPatternTemplate
+                explosionPatternTemplate,
+                implosionPatternTemplate
             ];
 
             while(true) {
@@ -906,8 +963,12 @@
                     currentPatternGenerator = thunderPatternTemplate();
                     defaultPatternInterval = 500;
                     applyPattern();
-                } else if (e.target.value === 'accelerando') {
-                    currentPatternGenerator = accelerandoPatternTemplate();
+                } else if (e.target.value === 'explosion') {
+                    currentPatternGenerator = explosionPatternTemplate();
+                    defaultPatternInterval = 500;
+                    applyPattern();
+                } else if (e.target.value === 'implosion') {
+                    currentPatternGenerator = implosionPatternTemplate();
                     defaultPatternInterval = 500;
                     applyPattern();
                 } else if (e.target.value === 'none') {
