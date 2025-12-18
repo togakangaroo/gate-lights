@@ -212,6 +212,10 @@
                 <label for="pattern-waterfall">Waterfall</label>
             </div>
             <div class="pattern-option">
+                <input type="radio" id="pattern-swizzle" name="pattern" value="swizzle">
+                <label for="pattern-swizzle">Swizzle</label>
+            </div>
+            <div class="pattern-option">
                 <input type="radio" id="pattern-breathing" name="pattern" value="breathing">
                 <label for="pattern-breathing">Breathing</label>
             </div>
@@ -403,6 +407,23 @@
                        ${bottomRow.join('')}`;
             }
         }
+
+     const swizzlePatternTemplate = function*() {
+            while(true) {
+                yield `110111
+                       011101`
+                yield `111011
+                       101110`
+                yield `111101
+                       010111`
+                yield `111110
+                       101011`
+                yield `011111
+                       110101`
+                yield `101111
+                       111010`
+            }
+     }
 
         const waterfallPatternTemplate = function*() {
             while(true) {
@@ -722,6 +743,7 @@
                 snakePatternTemplate,
                 sparklePatternTemplate,
                 waterfallPatternTemplate,
+                swizzlePatternTemplate,
                 breathingPatternTemplate,
                 rule30PatternTemplate,
                 variableRule30PatternTemplate,
@@ -913,6 +935,10 @@
                 } else if (e.target.value === 'waterfall') {
                     currentPatternGenerator = waterfallPatternTemplate();
                     defaultPatternInterval = 200;
+                    applyPattern();
+                } else if (e.target.value === 'swizzle') {
+                    currentPatternGenerator = swizzlePatternTemplate();
+                    defaultPatternInterval = 300;
                     applyPattern();
                 } else if (e.target.value === 'breathing') {
                     currentPatternGenerator = breathingPatternTemplate();
