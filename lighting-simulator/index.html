@@ -526,10 +526,14 @@
                 [0, 0, 0, 1, 0, 0]  // Start with single cell in middle
             ];
 
+            let lastState = null;
+
             while(true) {
                 // Convert grid to string
                 const topStr = grid[0].join('');
                 const bottomStr = grid[1].join('');
+                const currentState = `${topStr}${bottomStr}`;
+
                 yield `${topStr}
                        ${bottomStr}`;
 
@@ -550,12 +554,12 @@
                 grid[0] = [...grid[1]];
                 grid[1] = newBottom;
 
-                // Reset if grid is completely empty
-                const isEmpty = grid[0].every(cell => cell === 0) && grid[1].every(cell => cell === 0);
-                if (isEmpty) {
-                    // Yield the empty grid once
-                    yield `000000
-                           000000`;
+                // Reset if pattern is stuck (same as last step)
+                const newState = `${grid[0].join('')}${grid[1].join('')}`;
+                if (newState === lastState) {
+                    // Yield the stuck state once
+                    yield `${grid[0].join('')}
+                           ${grid[1].join('')}`;
 
                     // Reset with random starting position
                     const newGrid = [
@@ -571,6 +575,9 @@
                     }
 
                     grid = newGrid;
+                    lastState = null;
+                } else {
+                    lastState = currentState;
                 }
             }
         }
@@ -666,9 +673,9 @@
 
             let grid = Array(GRID_ROWS).fill(0).map(() => Array(GRID_COLS).fill(0));
 
-            let antRow = Math.floor(GRID_ROWS / 2);
-            let antCol = Math.floor(GRID_COLS / 2);
-            let antDir = 0; // 0=up, 1=right, 2=down, 3=left
+            let antRow = Math.floor(Math.random() * GRID_ROWS);
+            let antCol = Math.floor(Math.random() * GRID_COLS);
+            let antDir = Math.floor(Math.random() * 4); // 0=up, 1=right, 2=down, 3=left
 
             while(true) {
                 // Calculate display window centered on ant
