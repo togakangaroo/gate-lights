@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acrylic Rod Lighting Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #d3d3d3;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .info {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .simulator-container {
+            background: #e8e8e8;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .rods-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 60px; /* 6 inches * 10px per inch = 60px */
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .rod-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .rod {
+            width: 5px; /* 0.5 inches * 10px per inch = 5px */
+            height: 600px; /* 5 feet * 12 inches/foot * 10px per inch = 600px */
+            background: transparent;
+            border: 1px solid #000;
+            border-radius: 2px;
+            box-shadow: none;
+            transition: all 0.3s ease;
+        }
+
+        .rod:hover {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .led-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            font-size: 10px;
+            color: #666;
+            user-select: none;
+        }
+
+        .specs {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Acrylic Rod Lighting Simulator</h1>
+
+    <div class="info">
+        <div>6 acrylic rods: 5ft tall × 0.5" wide, spaced 6" apart</div>
+        <div class="specs">Scale: 10px = 1 inch</div>
+    </div>
+
+    <div class="simulator-container">
+        <div class="rods-container" id="rodsContainer">
+            <div class="rod-wrapper">
+                <input type="checkbox" class="led-checkbox" data-light="1" data-rod="1" data-end="top" id="led-1">
+                <div class="rod" data-rod="1"></div>
+                <input type="checkbox" class="led-checkbox" data-light="7" data-rod="1" data-end="bottom" id="led-7">
+            </div>
+            <div class="rod-wrapper">
+                <input type="checkbox" class="led-checkbox" data-light="2" data-rod="2" data-end="top" id="led-2">
+                <div class="rod" data-rod="2"></div>
+                <input type="checkbox" class="led-checkbox" data-light="8" data-rod="2" data-end="bottom" id="led-8">
+            </div>
+            <div class="rod-wrapper">
+                <input type="checkbox" class="led-checkbox" data-light="3" data-rod="3" data-end="top" id="led-3">
+                <div class="rod" data-rod="3"></div>
+                <input type="checkbox" class="led-checkbox" data-light="9" data-rod="3" data-end="bottom" id="led-9">
+            </div>
+            <div class="rod-wrapper">
+                <input type="checkbox" class="led-checkbox" data-light="4" data-rod="4" data-end="top" id="led-4">
+                <div class="rod" data-rod="4"></div>
+                <input type="checkbox" class="led-checkbox" data-light="10" data-rod="4" data-end="bottom" id="led-10">
+            </div>
+            <div class="rod-wrapper">
+                <input type="checkbox" class="led-checkbox" data-light="5" data-rod="5" data-end="top" id="led-5">
+                <div class="rod" data-rod="5"></div>
+                <input type="checkbox" class="led-checkbox" data-light="11" data-rod="5" data-end="bottom" id="led-11">
+            </div>
+            <div class="rod-wrapper">
+                <input type="checkbox" class="led-checkbox" data-light="6" data-rod="6" data-end="top" id="led-6">
+                <div class="rod" data-rod="6"></div>
+                <input type="checkbox" class="led-checkbox" data-light="12" data-rod="6" data-end="bottom" id="led-12">
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const rods = document.querySelectorAll('.rod');
+        const ledCheckboxes = document.querySelectorAll('.led-checkbox');
+
+        // Bright green LED color
+        const LED_COLOR = { r: 0, g: 255, b: 0 };
+
+        // Light state: tracks which lights are on
+        const lightState = {};
+
+        // Map light number to rod and end
+        function getLightInfo(lightNumber) {
+            // Lights 1-6 are top (rods 1-6)
+            // Lights 7-12 are bottom (rods 1-6)
+            if (lightNumber >= 1 && lightNumber <= 6) {
+                return { rod: lightNumber, end: 'top' };
+            } else if (lightNumber >= 7 && lightNumber <= 12) {
+                return { rod: lightNumber - 6, end: 'bottom' };
+            }
+            return null;
+        }
+
+        // Toggle a light on or off
+        function toggle(lightNumber, isOn) {
+            lightState[lightNumber] = isOn;
+
+            const info = getLightInfo(lightNumber);
+            if (!info) return;
+
+            const rodElement = document.querySelector(`.rod[data-rod="${info.rod}"]`);
+            updateRodGradient(rodElement, info.rod);
+        }
+
+        function updateRodGradient(rodElement, rodNum) {
+            // Find which lights are on for this rod
+            const topLight = rodNum; // Lights 1-6
+            const bottomLight = rodNum + 6; // Lights 7-12
+
+            const topLit = lightState[topLight] || false;
+            const bottomLit = lightState[bottomLight] || false;
+
+            if (!topLit && !bottomLit) {
+                // No LEDs lit - transparent
+                rodElement.style.background = 'transparent';
+            } else if (topLit && !bottomLit) {
+                // Top LED lit - gradient from top (70% opacity) to bottom (0% opacity)
+                rodElement.style.background = `linear-gradient(to bottom,
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0.7),
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0))`;
+            } else if (!topLit && bottomLit) {
+                // Bottom LED lit - gradient from bottom (70% opacity) to top (0% opacity)
+                rodElement.style.background = `linear-gradient(to top,
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0.7),
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0))`;
+            } else {
+                // Both LEDs lit - bright at both ends, transparent in middle
+                rodElement.style.background = `linear-gradient(to bottom,
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0.7) 0%,
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0) 50%,
+                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0.7) 100%)`;
+            }
+        }
+
+        // Add event listeners to LED checkboxes
+        ledCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const lightNumber = parseInt(e.target.dataset.light);
+                toggle(lightNumber, e.target.checked);
+            });
+        });
+
+        // Initialize light state
+        for (let i = 1; i <= 12; i++) {
+            lightState[i] = false;
+        }
+
+        // Initialize all rod gradients
+        rods.forEach(rod => {
+            const rodNum = parseInt(rod.dataset.rod);
+            updateRodGradient(rod, rodNum);
+        });
+
+        // Make toggle function available globally for testing/debugging
+        window.toggle = toggle;
+    </script>
+</body>
+</html>
