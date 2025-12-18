@@ -216,6 +216,10 @@
                 <label for="pattern-swizzle">Swizzle</label>
             </div>
             <div class="pattern-option">
+                <input type="radio" id="pattern-contraflow" name="pattern" value="contraflow">
+                <label for="pattern-contraflow">Contraflow</label>
+            </div>
+            <div class="pattern-option">
                 <input type="radio" id="pattern-breathing" name="pattern" value="breathing">
                 <label for="pattern-breathing">Breathing</label>
             </div>
@@ -408,22 +412,47 @@
             }
         }
 
-     const swizzlePatternTemplate = function*() {
-            while(true) {
-                yield `110111
-                       011101`
-                yield `111011
-                       101110`
-                yield `111101
-                       010111`
-                yield `111110
-                       101011`
-                yield `011111
-                       110101`
-                yield `101111
-                       111010`
-            }
-     }
+        const swizzlePatternTemplate = function*() {
+                while(true) {
+                    yield `110111
+                           011101`
+                    yield `111011
+                           101110`
+                    yield `111101
+                           010111`
+                    yield `111110
+                           101011`
+                    yield `011111
+                           110101`
+                    yield `101111
+                           111010`
+                }
+        }
+
+        const contraflowPatternTemplate = function*() {
+                const patterns = [
+                    [`011111
+                      111110`, 150],
+                    [`101111
+                      111101`, 250],
+                    [`110111
+                      111011`, 300],
+                    [`111011
+                      110111`, 300],
+                    [`111101
+                      101111`, 250],
+                    [`111110
+                      011111`, 150],
+                ]
+
+                while(true) {
+                    for(const p of patterns)
+                        yield p
+                    for(const p of patterns.toReversed())
+                        yield p
+                }
+        }
+
 
         const waterfallPatternTemplate = function*() {
             while(true) {
@@ -771,6 +800,7 @@
                 sparklePatternTemplate,
                 waterfallPatternTemplate,
                 swizzlePatternTemplate,
+                contraflowPatternTemplate,
                 breathingPatternTemplate,
                 rule30PatternTemplate,
                 variableRule30PatternTemplate,
@@ -965,6 +995,10 @@
                     applyPattern();
                 } else if (e.target.value === 'swizzle') {
                     currentPatternGenerator = swizzlePatternTemplate();
+                    defaultPatternInterval = 300;
+                    applyPattern();
+                } else if (e.target.value === 'contraflow') {
+                    currentPatternGenerator = contraflowPatternTemplate();
                     defaultPatternInterval = 300;
                     applyPattern();
                 } else if (e.target.value === 'breathing') {
