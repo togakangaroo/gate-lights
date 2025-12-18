@@ -97,6 +97,10 @@
     <h1>Acrylic Rod Lighting Simulator</h1>
 
     <div class="info">
+        <p style="max-width: 600px; margin: 0 auto 15px; line-height: 1.5;">
+            This simulator represents an art installation featuring vertical acrylic rods with LED lights at each end.
+            Use the checkboxes to toggle lights on and off, experimenting with different patterns to visualize how the illuminated rods will look in the final display.
+        </p>
         <div>6 acrylic rods: 5ft tall × 0.5" wide, spaced 6" apart</div>
         <div class="specs">Scale: 10px = 1 inch</div>
     </div>
@@ -195,7 +199,6 @@
                 // Both LEDs lit - bright at both ends, transparent in middle
                 rodElement.style.background = `linear-gradient(to bottom,
                     rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0.7) 0%,
-                    rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0) 50%,
                     rgba(${LED_COLOR.r}, ${LED_COLOR.g}, ${LED_COLOR.b}, 0.7) 100%)`;
             }
         }
