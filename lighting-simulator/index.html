@@ -195,6 +195,10 @@
                 <input type="radio" id="pattern-wave" name="pattern" value="wave">
                 <label for="pattern-wave">Wave</label>
             </div>
+            <div class="pattern-option">
+                <input type="radio" id="pattern-snake" name="pattern" value="snake">
+                <label for="pattern-snake">Snake</label>
+            </div>
         </div>
     </div>
 
@@ -207,6 +211,35 @@
 
         // Light state: tracks which lights are on
         const lightState = {};
+
+        const snakePatternTemplate = function*() {
+            while(true) {
+                yield `111000
+                       000000`
+                yield `011100
+                       000000`
+                yield `001110
+                       000000`
+                yield `000111
+                       000000`
+                yield `000011
+                       000001`
+                yield `000001
+                       000011`
+                yield `000000
+                       000111`
+                yield `000000
+                       001110`
+                yield `000000
+                       011100`
+                yield `000000
+                       111000`
+                yield `100000
+                       110000`
+                yield `110000
+                       100000`
+            }
+        }
 
         // Map light number to rod and end
         function getLightInfo(lightNumber) {
@@ -288,6 +321,7 @@
         let bounceDirection = 1; // 1 for right, -1 for left
         let wavePosition = 0;
         let waveDirection = 1; // 1 for right, -1 for left
+        let snakeGenerator = null;
 
         function clearAllLights() {
             for (let i = 1; i <= 12; i++) {
@@ -389,6 +423,27 @@
             }
         }
 
+        function snakePattern() {
+            // Get next pattern from generator
+            const result = snakeGenerator.next();
+            const patternString = result.value;
+
+            // Parse the pattern string, extracting only 0s and 1s
+            const digits = patternString.replace(/[^01]/g, '');
+
+            // Clear all lights first
+            clearAllLights();
+
+            // First 6 digits are top LEDs (1-6)
+            // Next 6 digits are bottom LEDs (7-12)
+            for (let i = 0; i < digits.length && i < 12; i++) {
+                if (digits[i] === '1') {
+                    const lightNumber = i + 1;
+                    toggle(lightNumber, true);
+                }
+            }
+        }
+
         // Event listeners for pattern radio buttons
         const patternRadios = document.querySelectorAll('input[name="pattern"]');
         patternRadios.forEach(radio => {
@@ -412,6 +467,12 @@
 
                     // Start the wave animation (400ms interval)
                     animationTimer = setInterval(wavePattern, 400);
+                } else if (e.target.value === 'snake') {
+                    // Create new snake generator instance
+                    snakeGenerator = snakePatternTemplate();
+
+                    // Start the snake animation (500ms interval)
+                    animationTimer = setInterval(snakePattern, 500);
                 } else if (e.target.value === 'none') {
                     // Just stop the animation, keep current light state
                 }
