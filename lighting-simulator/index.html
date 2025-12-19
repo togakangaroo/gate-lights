@@ -230,6 +230,10 @@
                 <label for="pattern-mila">Mila</label>
             </div>
             <div class="pattern-option">
+                <input type="radio" id="pattern-gravity" name="pattern" value="gravity">
+                <label for="pattern-gravity">Gravity</label>
+            </div>
+            <div class="pattern-option">
                 <input type="radio" id="pattern-octopus-isaac" name="pattern" value="octopus-isaac">
                 <label for="pattern-octopus-isaac">Octopus Isaac</label>
             </div>
@@ -272,10 +276,6 @@
             <div class="pattern-option">
                 <input type="radio" id="pattern-intensity-wave" name="pattern" value="intensity-wave">
                 <label for="pattern-intensity-wave">Intensity Wave</label>
-            </div>
-            <div class="pattern-option">
-                <input type="radio" id="pattern-scanner" name="pattern" value="scanner">
-                <label for="pattern-scanner">Scanner</label>
             </div>
             <div class="pattern-option">
                 <input type="radio" id="pattern-campfire" name="pattern" value="campfire">
@@ -335,30 +335,30 @@
             while(true) {
                 // Moving right
                 yield [`100000
-                        110000`, 350]
+                        110000`, 100]
                 yield [`010000
-                        111000`, 200]
+                        111000`, 100]
                 yield [`001000
-                        111100`, 200]
+                        111100`, 100]
                 yield [`000100
-                        011110`, 200]
+                        011110`, 100]
                 yield [`000010
-                        001111`, 200]
+                        001111`, 100]
                 yield [`000001
-                        000111`, 200]
+                        000111`, 100]
                 yield [`000001
-                        000011`, 350]
+                        000011`, 100]
                 // Moving left
                 yield [`000010
-                        000111`, 200]
+                        000111`, 100]
                 yield [`000100
-                        001111`, 200]
+                        001111`, 100]
                 yield [`001000
-                        011110`, 200]
+                        011110`, 100]
                 yield [`010000
-                        111100`, 200]
+                        111100`, 100]
                 yield [`100000
-                        111000`, 200]
+                        111000`, 100]
             }
         }
 
@@ -448,6 +448,65 @@
                                 000000`, 400]
                     }
                 }
+        }
+
+        const gravityPatternTemplate = function*() {
+            // Track state for each rod: -1 = off, 0+ = timesteps since lit
+            const rodStates = [-1, -1, -1, -1, -1, -1];
+
+            // Weights for each rod (bell curve - center rods 2x more likely than edges)
+            const weights = [1, 1.5, 2, 2, 1.5, 1];
+            const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+            while(true) {
+                // Select a random rod to light up (weighted)
+                const rand = Math.random() * totalWeight;
+                let cumulative = 0;
+                let selectedRod = 0;
+                for (let i = 0; i < 6; i++) {
+                    cumulative += weights[i];
+                    if (rand <= cumulative) {
+                        selectedRod = i;
+                        break;
+                    }
+                }
+
+                // Light up the selected rod
+                rodStates[selectedRod] = 0;
+
+                // Build pattern based on current states
+                const topRow = [];
+                const bottomRow = [];
+
+                for (let i = 0; i < 6; i++) {
+                    if (rodStates[i] === -1 || rodStates[i] >= 4) {
+                        // Rod is off
+                        topRow.push('0');
+                        bottomRow.push('0');
+                    } else if (rodStates[i] < 2) {
+                        // Rod is fully lit (timesteps 0-1)
+                        topRow.push('1');
+                        bottomRow.push('1');
+                    } else {
+                        // Only bottom lit (timesteps 2-3) - gravity pulls light down
+                        topRow.push('0');
+                        bottomRow.push('1');
+                    }
+                }
+
+                yield [`${topRow.join('')}
+                        ${bottomRow.join('')}`, 400]
+
+                // Increment all active rod states
+                for (let i = 0; i < 6; i++) {
+                    if (rodStates[i] >= 0) {
+                        rodStates[i]++;
+                        if (rodStates[i] >= 4) {
+                            rodStates[i] = -1; // Turn off
+                        }
+                    }
+                }
+            }
         }
 
         const octopusIsaacPatternTemplate = function*() {
@@ -816,55 +875,6 @@
             }
         }
 
-        // Scanner (KITT) - Bright point moving back and forth with trailing dim lights
-        const scannerPatternTemplate = function*() {
-            while(true) {
-                // Move left to right
-                yield [`100000
-                        100000`, 100];  // Position 0 full
-
-                yield [`110000
-                        110000`, 100];  // Position 0 full, 1 full
-
-                yield [`010000
-                        111000`, 100];  // Position 0 half, 1 full, 2 half
-
-                yield [`001000
-                        011100`, 100];  // Position 1 half, 2 full, 3 half
-
-                yield [`000100
-                        001110`, 100];  // Position 2 half, 3 full, 4 half
-
-                yield [`000010
-                        000111`, 100];  // Position 3 half, 4 full, 5 half
-
-                yield [`000001
-                        000011`, 100];  // Position 4 half, 5 full
-
-                yield [`000001
-                        000001`, 100];  // Position 5 full
-
-                // Move right to left
-                yield [`000011
-                        000011`, 100];  // Position 4 full, 5 full
-
-                yield [`000110
-                        000111`, 100];  // Position 3 half, 4 full, 5 half
-
-                yield [`001100
-                        001110`, 100];  // Position 2 half, 3 full, 4 half
-
-                yield [`011000
-                        011100`, 100];  // Position 1 half, 2 full, 3 half
-
-                yield [`110000
-                        111000`, 100];  // Position 0 half, 1 full, 2 half
-
-                yield [`100000
-                        110000`, 100];  // Position 0 full, 1 full
-            }
-        }
-
         // Campfire - Random flickering at different intensity levels
         const campfirePatternTemplate = function*() {
             const rodStates = [0, 0, 0, 0, 0, 0];  // 0=off, 1=half, 2=full
@@ -1034,6 +1044,7 @@
                 swizzlePatternTemplate,
                 contraflowPatternTemplate,
                 milaPatternTemplate,
+                gravityPatternTemplate,
                 octopusIsaacPatternTemplate,
                 breathingPatternTemplate,
                 rule30PatternTemplate,
@@ -1045,7 +1056,6 @@
                 explosionPatternTemplate,
                 mushroomCloudPatternTemplate,
                 intensityWavePatternTemplate,
-                scannerPatternTemplate,
                 campfirePatternTemplate,
                 shimmerPatternTemplate
             ];
@@ -1232,7 +1242,7 @@
                     applyPattern();
                 } else if (e.target.value === 'wave') {
                     currentPatternGenerator = wavePatternTemplate();
-                    defaultPatternInterval = 400;
+                    defaultPatternInterval = 100;
                     applyPattern();
                 } else if (e.target.value === 'snake') {
                     currentPatternGenerator = snakePatternTemplate();
@@ -1257,6 +1267,10 @@
                 } else if (e.target.value === 'mila') {
                     currentPatternGenerator = milaPatternTemplate();
                     defaultPatternInterval = 300;
+                    applyPattern();
+                } else if (e.target.value === 'gravity') {
+                    currentPatternGenerator = gravityPatternTemplate();
+                    defaultPatternInterval = 200;
                     applyPattern();
                 } else if (e.target.value === 'octopus-isaac') {
                     currentPatternGenerator = octopusIsaacPatternTemplate();
@@ -1301,10 +1315,6 @@
                 } else if (e.target.value === 'intensity-wave') {
                     currentPatternGenerator = intensityWavePatternTemplate();
                     defaultPatternInterval = 200;
-                    applyPattern();
-                } else if (e.target.value === 'scanner') {
-                    currentPatternGenerator = scannerPatternTemplate();
-                    defaultPatternInterval = 100;
                     applyPattern();
                 } else if (e.target.value === 'campfire') {
                     currentPatternGenerator = campfirePatternTemplate();
