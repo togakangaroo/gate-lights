@@ -220,6 +220,10 @@
                 <label for="pattern-mila">Mila</label>
             </div>
             <div class="pattern-option">
+                <input type="radio" id="pattern-octopus-isaac" name="pattern" value="octopus-isaac">
+                <label for="pattern-octopus-isaac">Octopus Isaac</label>
+            </div>
+            <div class="pattern-option">
                 <input type="radio" id="pattern-breathing" name="pattern" value="breathing">
                 <label for="pattern-breathing">Breathing</label>
             </div>
@@ -432,6 +436,23 @@
                         yield [`000000
                                 000000`, 400]
                     }
+                }
+        }
+
+        const octopusIsaacPatternTemplate = function*() {
+                while(true) {
+                    yield `101110
+                           011101`
+                    yield `011111
+                           111110`
+                    yield `111111
+                           111111`
+                    yield `000000
+                           000000`
+                    yield `111110
+                           011111`
+                    yield `011101
+                           101110`
                 }
         }
 
@@ -1002,6 +1023,7 @@
                 swizzlePatternTemplate,
                 contraflowPatternTemplate,
                 milaPatternTemplate,
+                octopusIsaacPatternTemplate,
                 breathingPatternTemplate,
                 rule30PatternTemplate,
                 variableRule30PatternTemplate,
@@ -1223,6 +1245,10 @@
                     applyPattern();
                 } else if (e.target.value === 'mila') {
                     currentPatternGenerator = milaPatternTemplate();
+                    defaultPatternInterval = 300;
+                    applyPattern();
+                } else if (e.target.value === 'octopus-isaac') {
+                    currentPatternGenerator = octopusIsaacPatternTemplate();
                     defaultPatternInterval = 300;
                     applyPattern();
                 } else if (e.target.value === 'breathing') {
