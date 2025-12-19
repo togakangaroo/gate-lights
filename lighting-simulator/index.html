@@ -22,6 +22,14 @@
             min-height: 100vh;
         }
 
+        .main-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
         h1 {
             margin-bottom: 20px;
             font-size: 24px;
@@ -93,11 +101,12 @@
         }
 
         .control-panel {
-            margin-top: 30px;
             padding: 20px;
             background: #e8e8e8;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+            flex-shrink: 0;
         }
 
         .control-panel h2 {
@@ -141,7 +150,8 @@
         <div class="specs">Scale: 10px = 1 inch</div>
     </div>
 
-    <div class="simulator-container">
+    <div class="main-container">
+        <div class="simulator-container">
         <div class="rods-container" id="rodsContainer">
             <div class="rod-wrapper">
                 <input type="checkbox" class="led-checkbox" data-light="1" data-rod="1" data-end="top" id="led-1">
@@ -174,9 +184,9 @@
                 <input type="checkbox" class="led-checkbox" data-light="12" data-rod="6" data-end="bottom" id="led-12">
             </div>
         </div>
-    </div>
+        </div>
 
-    <div class="control-panel">
+        <div class="control-panel">
         <h2>Patterns</h2>
         <div class="pattern-options">
             <div class="pattern-option">
@@ -275,6 +285,7 @@
                 <input type="radio" id="pattern-shimmer" name="pattern" value="shimmer">
                 <label for="pattern-shimmer">Shimmer</label>
             </div>
+        </div>
         </div>
     </div>
 
