@@ -105,9 +105,8 @@
 
 #+end_src
 
-#+begin_src python :tangle /ssh:gmauer@10.0.0.13:/home/gmauer/gate-lights/heartbeat_pattern.py :var pin_layout=pin-layout
-  <<reusable-header>>
-
+#+name: heartbeat-pattern
+#+begin_src python :eval no :mkdirp yes :tangle ./src/patterns/heartbeat.py
   def heartbeat_pattern():
       """
       Heartbeat pattern generator that yields (pattern, delay_ms) tuples.
@@ -137,6 +136,12 @@
           # Longer pause before next heartbeat
           yield (""" 000000
                      000000""", 600)
+#+end_src
+
+#+begin_src python :tangle /ssh:gmauer@10.0.0.13:/home/gmauer/gate-lights/heartbeat_pattern.py :var pin_layout=pin-layout
+  <<reusable-header>>
+
+  <<heartbeat-pattern>>
 
   apply_pattern(heartbeat_pattern())
 #+end_src
