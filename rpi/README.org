@@ -44,14 +44,8 @@
        pop-to-buffer)
 #+end_src
 
-#+name: reusable-header
-#+begin_src python :eval no
-  # /// script
-  # dependencies = [
-  #   "RPi.GPIO",
-  # ]
-  # ///
-
+#+name:framework
+#+begin_src python :eval no :tangle ./src/framework.py :var pin_layout=pin-layout
   import RPi.GPIO as GPIO
   import time
   from functools import cache
@@ -105,6 +99,17 @@
 
 #+end_src
 
+#+name: reusable-header
+#+begin_src python :eval no
+  # /// script
+  # dependencies = [
+  #   "RPi.GPIO",
+  # ]
+  # ///
+
+  <<framework>>
+#+end_src
+
 #+name: heartbeat-pattern
 #+begin_src python :eval no :mkdirp yes :tangle ./src/patterns/heartbeat.py
   def heartbeat_pattern():
@@ -145,3 +150,9 @@
 
   apply_pattern(heartbeat_pattern())
 #+end_src
+
+* Deploy
+#+begin_src emacs-lisp :dir . :results silent
+  (copy-directory "./src/" "/ssh:gmauer@10.0.0.13:/home/gmauer/gate-lights" nil 't 't)
+#+end_src
+
