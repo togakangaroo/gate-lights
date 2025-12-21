@@ -1,0 +1,142 @@
+* Wiring
+:PROPERTIES:
+:ID:       27778C12-76E5-4192-AD82-94940D410210
+:END:
+
+#+name: pin-layout
+| Pin (physical) | Pin (BCM) | Wire # | Works? |
+|----------------+-----------+--------+--------|
+|             39 |           | Ground |        |
+|             37 |        26 |      1 | y      |
+|              7 |         4 |      2 | y      |
+|             31 |         6 |      3 | y      |
+|             23 |        11 |      4 | y      |
+|             15 |        22 |      5 | y      |
+|             19 |        10 |      6 | y      |
+|              5 |           | Ground | y      |
+|             36 |        16 |      7 | y      |
+|             18 |        24 |      8 | y      |
+|             28 |         1 |      9 | y      |
+|             16 |        23 |     10 | y      |
+|             22 |        25 |     11 | y      |
+|             12 |        18 |     12 | y      |
+
+
+#+DOWNLOADED: screenshot @ 2025-12-20 11:29:27
+[[file:Wiring/2025-12-20_11-29-27_screenshot.png]]
+
+* Playground
+  :PROPERTIES:
+  :header-args: :dir /ssh:gmauer@10.0.0.13:/home
+  :header-args:shell+: :results output :shebang "#!/bin/bash"
+  :header-args:python+: :python "/home/gmauer/.local/bin/uv run -"
+  :header-args:python+: :noweb yes
+  :END:
+
+  [[/ssh:gmauer@10.0.0.13:/home][View folder in pi]] to just force login over ssh
+
+  Now we can run ipython
+
+#+begin_src emacs-lisp :results silent
+  (--> "/home/gmauer/.local/bin/uv run --with RPi.GPIO --with ipython ipython --simple-prompt -i"
+       run-python
+       process-buffer
+       pop-to-buffer)
+#+end_src
+
+#+name: reusable-header
+#+begin_src python :eval no
+  # /// script
+  # dependencies = [
+  #   "RPi.GPIO",
+  # ]
+  # ///
+
+  import RPi.GPIO as GPIO
+  import time
+  from functools import cache
+
+  GPIO.setmode(GPIO.BCM)
+
+  @cache
+  def setup_pin(pin):
+      GPIO.setup(pin, GPIO.OUT)
+
+  pinmap = {wire_num: bcm for _, bcm, wire_num, __ in pin_layout if isinstance(wire_num, int) and bool(bcm)}
+  def toggle(wire, on=True):
+      pin = pinmap[wire]
+      setup_pin(pin)
+      GPIO.output(pin, on)
+
+  def all_off(pins):
+      """Turn off all pins"""
+      for pin in pins:
+          toggle(pin, False)
+
+
+  def apply_pattern(pattern_generator):
+      """
+      Apply patterns from a generator using the toggle function.
+
+      Usage:
+          pattern_gen = heartbeat_pattern()
+          apply_pattern(pattern_gen)
+
+      Args:
+          pattern_generator: Generator yielding (pattern_string, delay_ms) tuples
+      """
+      for pattern_string, delay_ms in pattern_generator:
+          # Parse the pattern string, extracting only 0s and 1s
+          digits = ''.join(c for c in pattern_string if c in '01')
+
+          # Clear all lights first
+          for i in range(1, 13):
+              toggle(i, False)
+
+          # First 6 digits are top LEDs (1-6)
+          # Next 6 digits are bottom LEDs (7-12)
+          for i, digit in enumerate(digits[:12]):
+              if digit == '1':
+                  light_number = i + 1
+                  toggle(light_number, True)
+
+          # Wait for the specified delay
+          time.sleep(delay_ms / 1000.0)
+
+#+end_src
+
+#+begin_src python :tangle /ssh:gmauer@10.0.0.13:/home/gmauer/gate-lights/heartbeat_pattern.py :var pin_layout=pin-layout
+  <<reusable-header>>
+
+  def heartbeat_pattern():
+      """
+      Heartbeat pattern generator that yields (pattern, delay_ms) tuples.
+      Pattern format: Two rows of 6 binary digits each
+      - First row: top LEDs (lights 1-6)
+      - Second row: bottom LEDs (lights 7-12)
+      """
+      while True:
+          # First beat (systole) - quick flash from center outward
+          yield (""" 000000
+                     001100""", 100)
+          yield (""" 001100
+                     011110""", 100)
+          yield (""" 011110
+                     111111""", 150)
+
+          # Brief pause
+          yield (""" 000000
+                     000000""", 100)
+
+          # Second beat (diastole) - slightly weaker
+          yield (""" 000000
+                     001100""", 100)
+          yield (""" 001100
+                     011110""", 150)
+
+          # Longer pause before next heartbeat
+          yield (""" 000000
+                     000000""", 600)
+
+  apply_pattern(heartbeat_pattern())
+#+end_src
