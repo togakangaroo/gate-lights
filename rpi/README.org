@@ -153,6 +153,6 @@
 
 * Deploy
 #+begin_src emacs-lisp :dir . :results silent
-  (copy-directory "./src/" "/ssh:gmauer@10.0.0.13:/home/gmauer/gate-lights" nil 't 't)
+  (async-shell-command "rsync -av --exclude='.venv' ./src/ gmauer@10.0.0.13:/home/gmauer/gate-lights/")
 #+end_src
 
