@@ -156,3 +156,25 @@
   (async-shell-command "rsync -av --exclude='.venv' ./src/ gmauer@10.0.0.13:/home/gmauer/gate-lights/")
 #+end_src
 
+* Autostart Setup
+To run the gate lights on startup using cron:
+
+1. Edit the [[/sudo:root@@10.0.0.13:/var/spool/cron/crontabs/gmauer][crontab file]]
+
+   (Or create it if it doesn't exist)
+
+2. Add this line:
+#+begin_src text
+@reboot cd /home/gmauer/gate-lights && .venv/bin/python app.py variable_rule30
+#+end_src
+
+3. To kill the process when SSH'd in:
+#+begin_src shell :dir /ssh:gmauer@10.0.0.13:/home :eval never
+pkill -f "app.py variable_rule30"
+#+end_src
+
+4. To manually start it again (or try a different pattern):
+#+begin_src shell :dir /ssh:gmauer@10.0.0.13:/home :eval never
+cd /home/gmauer/gate-lights && .venv/bin/python app.py variable_rule30 &
+#+end_src
+
